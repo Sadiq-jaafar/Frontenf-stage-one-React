@@ -1,0 +1,122 @@
+{% extends "base.twig" %}
+
+{% block title %}Tickets - Ticket App{% endblock %}
+
+{% block content %}
+<section>
+    <div class="profile-card card">
+        <div style="display: flex; justify-content: space-between; align-items: center">
+            <h2>Tickets</h2>
+            <div>
+                <button type="button" onclick="showNewTicketForm()">New Ticket</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 12px">
+            {% if tickets|length == 0 %}
+                <div class="card">No tickets yet. Create one to get started.</div>
+            {% else %}
+                {% for ticket in tickets %}
+                    <div class="ticket" role="article" aria-label="{{ ticket.title }}" data-ticket-id="{{ ticket.id }}" data-ticket="{{ ticket|json_encode|escape('html_attr') }}">
+                        <div class="meta">
+                            <strong>{{ ticket.title }}</strong>
+                            <small>{{ ticket.description|slice(0, 140)|default('No description') }}</small>
+                            <small>Created: {{ ticket.createdAt|date }}</small>
+                        </div>
+                        <div style="text-align: right">
+                            <div class="status {{ ticket.status }}">{{ ticket.status }}</div>
+                            <div class="actions" style="margin-top: 8px">
+                                <button onclick="editTicket('{{ ticket.id }}')" aria-label="Edit {{ ticket.title }}">Edit</button>
+                                <button onclick="deleteTicket('{{ ticket.id }}')" aria-label="Delete {{ ticket.title }}" style="background: #ffdddd; color: #900">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{# New/Edit Ticket Modal #}
+<div id="ticketModal" class="modal" style="display: none">
+    <div class="modal-content card">
+        <h2 id="modal-title">New Ticket</h2>
+        <form id="ticketForm" method="POST" action="/tickets">
+            <input type="hidden" name="_method" value="POST">
+            <input type="hidden" name="ticketId" id="ticketId">
+            
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    <option value="open">Open</option>
+                    <option value="closed">Closed</option>
+                    <option value="in_progress">In Progress</option>
+                </select>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="submit">Save</button>
+                <button type="button" onclick="hideModal()" class="secondary">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# Delete Confirmation Modal #}
+<div id="deleteModal" class="modal" style="display: none">
+    <div class="modal-content card">
+        <h2>Delete Ticket</h2>
+        <p>Are you sure you want to delete this ticket? This cannot be undone.</p>
+        <form id="deleteForm" method="POST" action="/tickets">
+            <input type="hidden" name="_method" value="DELETE">
+            <input type="hidden" name="ticketId" id="deleteTicketId">
+            <div class="modal-actions">
+                <button type="submit" class="danger">Delete</button>
+                <button type="button" onclick="hideDeleteModal()" class="secondary">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showNewTicketForm() {
+    document.getElementById('modal-title').textContent = 'New Ticket';
+    document.getElementById('ticketForm').reset();
+    document.getElementById('ticketId').value = '';
+    document.getElementById('ticketModal').style.display = 'flex';
+}
+
+function editTicket(id) {
+    const ticket = JSON.parse(document.querySelector(`[data-ticket-id="${id}"]`).dataset.ticket);
+    document.getElementById('modal-title').textContent = 'Edit Ticket';
+    document.getElementById('ticketId').value = id;
+    document.getElementById('title').value = ticket.title;
+    document.getElementById('description').value = ticket.description;
+    document.getElementById('status').value = ticket.status;
+    document.getElementById('ticketModal').style.display = 'flex';
+}
+
+function deleteTicket(id) {
+    document.getElementById('deleteTicketId').value = id;
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+
+function hideModal() {
+    document.getElementById('ticketModal').style.display = 'none';
+}
+
+function hideDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+</script>
+{% endblock %}
